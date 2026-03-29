@@ -17,6 +17,8 @@ app.use('/api/stocks', require('./routes/stockRoutes'));
 app.use('/api/movements', require('./routes/stockMovementRoutes'));
 app.use('/api/adjustments', require('./routes/stockAdjustmentRoutes'));
 app.use('/api/suppliers', require('./routes/supplierRoutes'));
+app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/alerts', require('./routes/alertRoutes'));
 
 // Export the app object for testing
 if (require.main === module) {

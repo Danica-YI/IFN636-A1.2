@@ -70,4 +70,17 @@ const deleteStock = async (req, res) => {
     }
 };
 
-module.exports = { getAllStocks, getStockById, createStock, updateStock, deleteStock };
+// Get low stock items
+const getLowStockItems = async (req, res) => {
+    try {
+        const stocks = await Stock.find({
+            $expr: { $lte: ['$quantity', '$lowStockThreshold'] },
+            status: 'active'
+        });
+        res.status(200).json(stocks);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { getAllStocks, getStockById, createStock, updateStock, deleteStock, getLowStockItems };
