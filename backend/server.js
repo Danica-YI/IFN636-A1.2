@@ -1,4 +1,4 @@
-
+// Warehouse Inventory Management System - Backend API
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
