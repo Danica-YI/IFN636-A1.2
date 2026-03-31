@@ -1,34 +1,57 @@
-name: CI/CD Pipeline
+name: Backend CI
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    name: Run Tests
+    runs-on: self-hosted
+    strategy:
+      matrix:
+        node-version: [22]
+    environment: MONGO_URI
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout Code
+      uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
 
-      - name: Install dependencies
-        run: |
-          cd backend
-          npm install
+    - name: Print Env Secret
+      env:
+        MONGO_URI: ${{ secrets.MONGO_URI }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        PORT: ${{ secrets.PORT }}
+      run: |
+        echo "Secret 1 is: $MONGO_URI"
+        echo "Secret 2 is: $JWT_SECRET"
+        echo "Secret 3 is: $PORT"
 
-      - name: Run tests
-        env:
-          MONGO_URI: ${{ secrets.MONGO_URI }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          PORT: 3000
-        run: |
-          cd backend
-          npm test
+    - name: Install Backend Dependencies
+      working-directory: ./backend
+      run: |
+        npm install --global yarn
+        yarn --version
+        yarn install
+
+    - name: Run Backend Tests
+      env:
+        MONGO_URI: ${{ secrets.MONGO_URI }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        PORT: ${{ secrets.PORT }}
+      working-directory: ./backend
+      run: npm test
+
+    - name: Create .env File
+      run: |
+        cd ./backend
+        touch .env
+        echo "${{ secrets.PROD }}" > .env
+
+    - run: pm2 restart all

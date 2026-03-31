@@ -4,11 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest --forceExit"
-   },
-    "jest": {
-       "testEnvironment": "node"
-    },
+    "test": "mocha tests/*.test.js --timeout 5000 --exit"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -23,7 +20,10 @@
     "mongoose": "^9.3.3"
   },
   "devDependencies": {
+    "chai": "^6.2.2",
     "jest": "^30.3.0",
+    "mocha": "^11.7.5",
+    "sinon": "^21.0.3",
     "supertest": "^7.2.2"
   }
 }

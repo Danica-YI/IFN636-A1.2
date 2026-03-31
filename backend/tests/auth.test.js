@@ -1,5 +1,8 @@
-const request = require('supertest');
+const chai = require('chai');
+const sinon = require('sinon');
 const express = require('express');
+const request = require('supertest');
+const { expect } = chai;
 
 const app = express();
 app.use(express.json());
@@ -13,17 +16,17 @@ app.post('/api/auth/login', (req, res) => {
 });
 
 describe('Auth API', () => {
-    test('should return 400 if email is missing', async () => {
+    it('should return 400 if email is missing', async () => {
         const res = await request(app)
             .post('/api/auth/login')
             .send({ password: 'test123' });
-        expect(res.statusCode).toBe(400);
+        expect(res.status).to.equal(400);
     });
 
-    test('should return 200 if email and password provided', async () => {
+    it('should return 200 if email and password provided', async () => {
         const res = await request(app)
             .post('/api/auth/login')
             .send({ email: 'test@test.com', password: 'test123' });
-        expect(res.statusCode).toBe(200);
+        expect(res.status).to.equal(200);
     });
 });
