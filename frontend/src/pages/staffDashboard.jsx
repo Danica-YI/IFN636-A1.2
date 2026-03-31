@@ -1,0 +1,350 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import API from '../service/api';
+
+const StatCard = ({ title, value, onClick, color }) => (
+    <div onClick={onClick} style={{
+        backgroundColor: 'white',
+        borderRadius: '16px',
+        padding: '20px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        cursor: 'pointer',
+        borderLeft: `4px solid ${color || '#ECBC76'}`,
+    }}>
+        <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#888',textAlign: 'left' }}>{title}</p>
+        <p style={{ margin: '0 0 12px 0', fontSize: '28px', fontWeight: 'bold', color: '#222',textAlign: 'left' }}>
+            {value?.toLocaleString() ?? '...'}
+        </p>
+        <div style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            backgroundColor: color || '#ECBC76',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontSize: '16px',
+        }}>→</div>
+    </div>
+);
+
+// navigation on mobile
+const MobileBottomNav = ({ navigate }) => (
+    <div style={{
+        position: 'sticky',
+        bottom: 0,
+        width: '100%',
+        backgroundColor: 'white',
+        display: 'flex',
+        justifyContent: 'space-around',
+        padding: '12px 0',
+        borderTop: '1px solid #eee',
+        zIndex: 100,
+        borderRadius: '0 0 40px 40px',
+    }}>
+        <span style={{ fontSize: '24px', cursor: 'pointer' }} onClick={() => navigate('/dashboard')}>👤</span>
+        <span style={{ fontSize: '24px', cursor: 'pointer' }} onClick={() => navigate('/orders')}>📋</span>
+        <span style={{ fontSize: '24px', cursor: 'pointer' }} onClick={() => navigate('/alerts')}>🔔</span>
+        <span style={{ fontSize: '24px', cursor: 'pointer' }} onClick={() => navigate('/adjustments')}>⚙️</span>
+        <span style={{ fontSize: '24px', cursor: 'pointer' }} onClick={() => navigate('/stocks')}>🏭</span>
+    </div>
+);
+
+// navigation on web
+const DesktopSidebar = ({ navigate, handleLogout, user }) => (
+    <div style={{
+        width: '240px',
+        minHeight: '100vh',
+        backgroundColor: 'white',
+        borderRight: '1px solid #eee',
+        padding: '20px 0',
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        display: 'flex',
+        flexDirection: 'column',
+    }}>
+        {/* Logo */}
+        <div style={{ padding: '0 20px 30px', borderBottom: '1px solid #eee' }}>
+            <span style={{ color: '#ECBC76', fontWeight: 'bold', fontSize: '24px' }}>WIMS</span>
+            <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#888' }}>Warehouse Inventory</p>
+        </div>
+
+        {/* User Info */}
+        <div style={{ padding: '20px', borderBottom: '1px solid #eee' }}>
+            <p style={{ margin: 0, fontWeight: 'bold', fontSize: '14px' }}>{user?.name}</p>
+            <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#ECBC76' }}>{user?.role?.toUpperCase()}</p>
+        </div>
+
+        {/* Nav Items */}
+        <nav style={{ flex: 1, padding: '20px 0' }}>
+            {[
+                { icon: '🏠', label: 'Dashboard', path: '/dashboard' },
+                { icon: '📦', label: 'Stock', path: '/stocks' },
+                { icon: '📥', label: 'Inbound', path: '/inbound' },
+                { icon: '📤', label: 'Outbound', path: '/outbound' },
+                { icon: '📋', label: 'View Orders', path: '/orders' },
+                { icon: '🔔', label: 'Low Stock Alerts', path: '/alerts' },
+                { icon: '⚙️', label: 'Adjustment Requests', path: '/adjustments' },
+            ].map((item) => (
+                <div
+                    key={item.path}
+                    onClick={() => navigate(item.path)}
+                    style={{
+                        padding: '12px 20px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        fontSize: '14px',
+                        color: '#444',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#FFF8EC'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                    <span>{item.icon}</span>
+                    <span>{item.label}</span>
+                </div>
+            ))}
+        </nav>
+
+        {/* Logout */}
+        <div style={{ padding: '20px', borderTop: '1px solid #eee' }}>
+            <button
+                onClick={handleLogout}
+                style={{
+                    width: '100%',
+                    padding: '10px',
+                    backgroundColor: '#ECBC76',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                }}
+            >
+                Logout
+            </button>
+        </div>
+    </div>
+);
+
+function StaffDashboard() {
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [stats, setStats] = useState({
+        totalStocks:0,
+        outboundList:0,
+        inboundList: 0,
+        lowStockAlerts: 0,
+        viewOrders: 0,
+        submittedRequests: 0,
+    });
+
+    useEffect(() => {
+        fetchStats();
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const fetchStats = async () => {
+        try {
+            const [stocks, movements, alerts, orders, adjustments] = await Promise.all([
+                API.get('/stocks'),
+                API.get('/movements'),
+                API.get('/alerts/active'),
+                API.get('/orders'),
+                API.get('/adjustments'),
+            ]);
+
+            setStats({
+                totalStocks: stocks.data.length,
+                outboundList: movements.data.filter(m =>
+                    m.type === 'outbound_sale' || m.type === 'outbound_return'
+                ).length,
+                inboundList: movements.data.filter(m => m.type === 'inbound').length,
+                lowStockAlerts: alerts.data.length,
+                viewOrders: orders.data.length,
+                submittedRequests: adjustments.data.filter(a =>
+                    a.requestedBy?._id === user?.id && a.status === 'pending'
+                ).length,
+            });
+        } catch (err) {
+            console.error('Failed to fetch stats:', err);
+        }
+    };
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
+
+    const cards = [
+        { title: 'Total Stocks', value: stats.totalStocks, path: '/stocks', color: '#ECBC76' },
+        { title: 'Outbound List', value: stats.outboundList, path: '/outbound', color: '#FF6B6B' },
+        { title: 'Inbound List', value: stats.inboundList, path: '/inbound', color: '#56CFE1' },
+        { title: 'Low Stock Alerts', value: stats.lowStockAlerts, path: '/alerts', color: '#FF9F1C' },
+        { title: 'View Orders', value: stats.viewOrders, path: '/orders', color: '#7C83FD' },
+        { title: 'Submitted Requests', value: stats.submittedRequests, path: '/adjustments', color: '#52B788' },
+    ];
+
+    // mobile
+    if (isMobile) {
+        return (
+            <div style={{
+                minHeight: '100vh',
+                backgroundColor: '#f0f0f0',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'flex-start',
+                padding: '20px 0',
+            }}>
+                <div style={{
+                    width: '390px',
+                    backgroundColor: '#f5f5f5',
+                    minHeight: 'calc(100vh - 40px)',
+                    borderRadius: '40px',
+                    overflow: 'hidden',
+                    boxShadow: '0 0 30px rgba(0,0,0,0.2)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                }}>
+                    {/* Mobile Header */}
+                    <div style={{
+                        backgroundColor: 'white',
+                        padding: '16px 20px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                    }}>
+                        <span style={{ color: '#ECBC76', fontWeight: 'bold', fontSize: '20px' }}>WIMS</span>
+                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                            <span style={{ fontSize: '14px', color: '#888' }}>{user?.name}</span>
+                            <span onClick={handleLogout} style={{ fontSize: '20px', cursor: 'pointer' }}>☰</span>
+                        </div>
+                    </div>
+
+                    <div style={{ flex: 1, overflowY: 'auto' }}>
+                        {/* Search Bar */}
+                        <div style={{ padding: '12px 20px' }}>
+                            <div style={{
+                                backgroundColor: 'white',
+                                borderRadius: '20px',
+                                padding: '10px 16px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+                            }}>
+                                <span style={{ color: '#aaa' }}>🔍</span>
+                                <input
+                                    placeholder="Search for something"
+                                    style={{ border: 'none', outline: 'none', width: '100%', fontSize: '14px', color: '#888' }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Greeting */}
+                        <div style={{ padding: '8px 20px 16px' }}>
+                            <h2 style={{ margin: 0, fontSize: '28px', textAlign: 'left' }}>
+                                <span style={{ fontFamily: 'cursive', fontWeight: 'normal' }}>hello </span>
+                                <span style={{ fontWeight: 'bold' }}>Staff</span>
+                            </h2>
+                        </div>
+
+                        {/* Stats Grid */}
+                        <div style={{
+                            padding: '0 20px 20px',
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
+                            gap: '16px',
+                        }}>
+                            {cards.map((card) => (
+                                <StatCard
+                                    key={card.title}
+                                    title={card.title}
+                                    value={card.value}
+                                    color={card.color}
+                                    onClick={() => navigate(card.path)}
+                                />
+                            ))}
+                        </div>
+                    </div>
+
+                    <MobileBottomNav navigate={navigate} />
+                </div>
+            </div>
+        );
+    }
+
+    // web
+    return (
+        <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+            {/* Sidebar */}
+            <DesktopSidebar navigate={navigate} handleLogout={handleLogout} user={user} />
+
+            {/* Main Content */}
+            <div style={{ marginLeft: '240px', flex: 1, padding: '30px' }}>
+                {/* Top Header */}
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '30px',
+                }}>
+                    <div>
+                        <h1 style={{ margin: 0, fontSize: '32px' }}>
+                            <span style={{ fontFamily: 'cursive', fontWeight: 'normal' }}>hello </span>
+                            <span style={{ fontWeight: 'bold' }}>Staff</span>
+                        </h1>
+                        <p style={{ margin: '4px 0 0', color: '#888', fontSize: '14px' }}>
+                            Welcome back, {user?.name}!
+                        </p>
+                    </div>
+
+                    {/* Search Bar */}
+                    <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '20px',
+                        padding: '10px 16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+                        width: '300px',
+                    }}>
+                        <span style={{ color: '#aaa' }}>🔍</span>
+                        <input
+                            placeholder="Search for something"
+                            style={{ border: 'none', outline: 'none', width: '100%', fontSize: '14px', color: '#888' }}
+                        />
+                    </div>
+                </div>
+
+                {/* Stats Grid */}
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: '20px',
+                }}>
+                    {cards.map((card) => (
+                        <StatCard
+                            key={card.title}
+                            title={card.title}
+                            value={card.value}
+                            color={card.color}
+                            onClick={() => navigate(card.path)}
+                        />
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default StaffDashboard;

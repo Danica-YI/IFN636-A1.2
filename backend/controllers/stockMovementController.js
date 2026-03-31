@@ -1,5 +1,6 @@
 const StockMovement = require('../models/stockMovement');
 const Stock = require('../models/Stock');
+const { createAlert } = require('./alertController');
 
 // Get all stock movements
 const getAllMovements = async (req, res) => {
@@ -37,7 +38,6 @@ const createMovement = async (req, res) => {
             return res.status(400).json({ message: 'Supplier is required for inbound and return movements' });
         }
 
-        // Find the stock
         const stock = await Stock.findById(stockId);
         if (!stock) return res.status(404).json({ message: 'Stock not found' });
 
@@ -51,6 +51,11 @@ const createMovement = async (req, res) => {
             stock.quantity -= quantity;
         }
         await stock.save();
+
+        // Check if low stock alert needed
+        if (stock.quantity <= stock.lowStockThreshold) {
+            await createAlert(stock._id);
+        }
 
         // Create movement record
         const movement = await StockMovement.create({
