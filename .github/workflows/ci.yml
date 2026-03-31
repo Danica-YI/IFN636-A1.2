@@ -54,4 +54,5 @@ jobs:
         touch .env
         echo "${{ secrets.PROD }}" > .env
 
-    - run: pm2 restart all
+    - name: Restart PM2
+      run: pm2 restart all || pm2 start ~/IFN636-A1.2/backend/server.js --name app
