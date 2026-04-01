@@ -1,2 +1,107 @@
-# IFN636-A1.2
-The project for IFN-A1.2.
+# WIMS - Warehouse Inventory Management System
+
+A full-stack web application for managing warehouse inventory, built with React.js frontend and Node.js/Express backend, deployed on AWS EC2.
+
+## Tech Stack
+
+- **Frontend**: React.js, Vite, Axios
+- **Backend**: Node.js, Express.js
+- **Database**: MongoDB Atlas
+- **Authentication**: JWT (JSON Web Token)
+- **Deployment**: AWS EC2, Nginx, PM2
+- **CI/CD**: GitHub Actions (self-hosted runner)
+- **Testing**: Mocha, Chai, Sinon
+
+## Features
+
+- User authentication (login/register) with JWT
+- Admin and Staff role-based access control
+- Stock Management (CRUD)
+- Supplier Management (CRUD)
+- Purchase Order Management (CRUD)
+- Stock Movement tracking (inbound/outbound)
+- Stock Adjustment records
+- Low stock alert management
+
+## Project Structure
+```
+IFN636-A1.2/
+├── backend/
+│   ├── config/
+│   ├── controllers/
+│   ├── middleware/
+│   ├── models/
+│   ├── routes/
+│   ├── tests/
+│   └── server.js
+├── frontend/
+│   ├── src/
+│   │   ├── context/
+│   │   ├── pages/
+│   │   └── service/
+│   └── index.html
+└── .github/
+    └── workflows/
+        └── ci.yml
+```
+
+## Getting Started
+
+### Prerequisites
+- Node.js v20+
+- npm
+- MongoDB Atlas account
+
+### Local Development
+
+1. Clone the repository:
+
+git clone https://github.com/Danica-YI/IFN636-A1.2.git
+
+
+2. Install backend dependencies:
+
+cd backend
+npm install
+
+
+3. Create `.env` file in backend:
+
+MONGO_URI=your_mongodb_uri
+JWT_SECRET=your_jwt_secret
+PORT=5001
+
+
+4. Start backend:
+
+npm start
+
+
+5. Install frontend dependencies:
+
+cd frontend
+npm install
+
+
+6. Start frontend:
+
+npm run dev
+
+
+### Running Tests
+
+cd backend
+npm test
+
+
+## Deployment (AWS EC2)
+
+- Backend runs on PM2 (port 5001)
+- Frontend served via PM2 (port 3000)
+- Nginx reverse proxy on port 80
+- CI/CD automated via GitHub Actions self-hosted runner
+
+## Live Demo
+
+- **Public URL**: http://52.63.253.103
+- **EC2 Instance ID**: i-0ec36a78dc5d80eed
