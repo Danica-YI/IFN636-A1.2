@@ -105,3 +105,10 @@ npm test
 
 - **Public URL**: http://3.107.200.252
 - **EC2 Instance ID**: i-0ec36a78dc5d80eed
+
+## Test Account
+
+| Role  |       Email         | Password |
+|-------|---------------------|----------|
+| Admin | kokorr247@gmail.com | 123      |
+| Staff | staff1@gmail.com    | 123      |
