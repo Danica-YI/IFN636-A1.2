@@ -103,5 +103,5 @@ npm test
 
 ## Live Demo
 
-- **Public URL**: http://52.63.253.103
+- **Public URL**: http://3.107.200.252
 - **EC2 Instance ID**: i-0ec36a78dc5d80eed
