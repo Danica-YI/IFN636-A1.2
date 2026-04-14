@@ -103,7 +103,7 @@ npm test
 
 ## Live Demo
 
-- **Public URL**: http://3.25.239.216
+- **Public URL**: http://16.176.208.163
 - **EC2 Instance ID**: i-0ec36a78dc5d80eed
 
 ## Test Account
